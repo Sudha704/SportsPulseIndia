@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">SportsPulse India</string>
+    <string name="splash_tagline">Your India. Your Sports. Live.</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_live">Live</string>
+    <string name="nav_venues">Venues</string>
+    <string name="nav_alerts">Alerts</string>
+
+    <!-- Dashboard -->
+    <string name="filter_all">All</string>
+    <string name="filter_live">LIVE</string>
+    <string name="label_live">LIVE</string>
+    <string name="label_upcoming">Upcoming</string>
+    <string name="label_completed">Full Time</string>
+    <string name="label_free">FREE</string>
+    <string name="label_subscription">SUBSCRIPTION</string>
+    <string name="telecast_on">On %s</string>
+    <string name="watch_now">Watch Now</string>
+    <string name="match_preview">Match Preview</string>
+    <string name="generating_analysis">Generating AI analysis…</string>
+
+    <!-- Venues -->
+    <string name="venue_radius_label">Search radius: %1$.0f km</string>
+    <string name="venue_open_now">Open Now</string>
+    <string name="venue_closed">Closed</string>
+    <string name="venue_opens_at">Opens %s</string>
+    <string name="venue_navigate">Navigate</string>
+    <string name="venue_book">Book</string>
+    <string name="venue_stale_banner">Last updated %s</string>
+    <string name="venue_permission_rationale">SportsPulse needs your location to find nearby venues. Please grant access.</string>
+    <string name="venue_city_search_hint">Search a city…</string>
+    <string name="venue_map_toggle">Map</string>
+    <string name="venue_list_toggle">List</string>
+
+    <!-- Alerts -->
+    <string name="alerts_empty">No match reminders set.\nTap a match to add an alert.</string>
+    <string name="alert_remind_before">Remind me %d min before</string>
+    <string name="alert_set">Alert set</string>
+    <string name="alert_removed">Alert removed</string>
+
+    <!-- Errors -->
+    <string name="error_no_internet">No internet connection. Showing cached data.</string>
+    <string name="error_location_unavailable">Location unavailable. Showing venues near Bengaluru.</string>
+    <string name="error_no_venues">No venues found in this area. Try increasing the radius.</string>
+    <string name="error_generic">Something went wrong. Pull to refresh.</string>
+
+    <!-- Permissions -->
+    <string name="permission_location_title">Location Access</string>
+    <string name="permission_notification_title">Notification Access</string>
+</resources>

@@ -1,0 +1,20 @@
+<resources>
+    <!--
+        SportsPulse India base theme.
+        Actual Material 3 colours and typography are applied in Compose via
+        core/ui/theme/Theme.kt — this XML theme is the minimum required to satisfy
+        the AppCompat/Compose interop and the splash screen.
+    -->
+    <style name="Theme.SportsPulseIndia" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- Splash screen theme (used only during app launch) -->
+    <style name="Theme.SportsPulseIndia.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0D1117</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.SportsPulseIndia</item>
+    </style>
+</resources>
