@@ -31,7 +31,8 @@ interface VenueRepository {
         location: UserLocation,
         radiusKm: Double = 15.0,
         venueType: VenueType? = null,
-        sportType: SportType? = null
+        sportType: SportType? = null,
+        forceRefresh: Boolean = false
     ): Flow<Result<List<Venue>>>
 
     /**

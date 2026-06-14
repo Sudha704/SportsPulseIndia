@@ -51,6 +51,30 @@ class AlertsViewModel @Inject constructor(
             is AlertsIntent.DismissError -> {
                 _uiState.update { it.copy(error = null) }
             }
+            is AlertsIntent.CreateCustomAlert -> {
+                viewModelScope.launch {
+                    runCatching {
+                        // Create a placeholder alert for the chosen sport category.
+                        // eventStartTimeIst is set 30 days from now so the reminder stays
+                        // in the list until an actual match is found for that sport.
+                        val now = System.currentTimeMillis()
+                        val futureTime = now + (30L * 24 * 60 * 60 * 1000) // 30 days ahead
+                        val alert = com.sportspulse.india.core.domain.entity.MatchAlert(
+                            id = java.util.UUID.randomUUID().toString(),
+                            eventId = "custom_${intent.sport.name}_${now}",
+                            eventTitle = "Next ${intent.sport.displayName} match",
+                            sport = intent.sport,
+                            eventStartTimeIst = futureTime,
+                            reminderMinutesBefore = intent.reminderMinutesBefore,
+                            isEnabled = true
+                        )
+                        alertRepository.upsertAlert(alert)
+                    }.onFailure { exception ->
+                        Timber.e(exception, "Failed to create custom alert")
+                        _uiState.update { it.copy(error = "Failed to create alert") }
+                    }
+                }
+            }
         }
     }
 

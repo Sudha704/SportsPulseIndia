@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,8 @@ fun VenueScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = uiState.isLoading)
+    
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -77,11 +81,22 @@ fun VenueScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Text(
-                        "Nearby Venues", 
-                        fontWeight = FontWeight.Bold,
-                        color = NavyBlue
-                    ) 
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = NavyBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            "Nearby Venues", 
+                            fontWeight = FontWeight.Bold,
+                            color = NavyBlue
+                        ) 
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
@@ -194,20 +209,29 @@ fun VenueScreen(
                 (selectedSport == null || venue.type == selectedSport)
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { viewModel.handleIntent(VenueIntent.RefreshVenues) },
+                modifier = Modifier.fillMaxSize()
+            ) {
                 if (uiState.isLoading && uiState.venues.isEmpty()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
                 } else if (filteredVenues.isEmpty() && !uiState.isLoading) {
-                    Text(
-                        text = "No venues found nearby.",
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text = "No venues found nearby.",
+                            modifier = Modifier.align(Alignment.Center),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         items(filteredVenues, key = { it.placeId }) { venue ->
                             VenueCard(

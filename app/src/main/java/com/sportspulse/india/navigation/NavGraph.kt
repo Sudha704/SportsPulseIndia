@@ -99,7 +99,7 @@ fun SportsPulseNavGraph(
             startDestination = Screen.BharatSportsChat.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // ─── Chat (Start Destination) ────────────────────────────────
+            // ─── Chat ────────────────────────────────────────────────────
             composable(Screen.BharatSportsChat.route) {
                 BharatSportsScreen()
             }

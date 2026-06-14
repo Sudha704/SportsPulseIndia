@@ -50,7 +50,7 @@ class VenueViewModel @Inject constructor(
                 _uiState.update { it.copy(isMapMode = intent.isMapMode) }
             }
             is VenueIntent.RefreshVenues -> {
-                loadVenues()
+                loadVenues(forceRefresh = true)
             }
             is VenueIntent.DismissError -> {
                 _uiState.update { it.copy(error = null, locationError = null) }
@@ -89,7 +89,7 @@ class VenueViewModel @Inject constructor(
         }
     }
 
-    private fun loadVenues() {
+    private fun loadVenues(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             val currentState = _uiState.value
             val loc = currentState.userLocation
@@ -103,7 +103,8 @@ class VenueViewModel @Inject constructor(
                 location = loc,
                 radiusKm = currentState.searchRadiusKm,
                 venueType = currentState.selectedVenueType,
-                sportType = currentState.selectedSportType
+                sportType = currentState.selectedSportType,
+                forceRefresh = forceRefresh
             )
             .onStart {
                 _uiState.update { it.copy(isLoading = true, error = null) }

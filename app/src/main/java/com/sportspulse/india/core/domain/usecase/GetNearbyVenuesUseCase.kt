@@ -25,14 +25,16 @@ class GetNearbyVenuesUseCase @Inject constructor(
      * @param radiusKm   Search radius; clamped to [15.0, 25.0] km.
      * @param venueType  Optional filter for venue category.
      * @param sportType  Optional filter for sport type.
+     * @param forceRefresh Ignore cache and fetch fresh data.
      */
     operator fun invoke(
         location: UserLocation,
         radiusKm: Double = 15.0,
         venueType: VenueType? = null,
-        sportType: SportType? = null
+        sportType: SportType? = null,
+        forceRefresh: Boolean = false
     ): Flow<Result<List<Venue>>> {
         val clampedRadius = radiusKm.coerceIn(15.0, 25.0)
-        return repository.getNearbyVenues(location, clampedRadius, venueType, sportType)
+        return repository.getNearbyVenues(location, clampedRadius, venueType, sportType, forceRefresh)
     }
 }

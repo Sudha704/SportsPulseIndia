@@ -72,13 +72,14 @@ class VenueRepositoryImpl @Inject constructor(
         location: UserLocation,
         radiusKm: Double,
         venueType: VenueType?,
-        sportType: SportType?
+        sportType: SportType?,
+        forceRefresh: Boolean
     ): Flow<Result<List<Venue>>> = flow {
         val radiusMeters = (radiusKm * 1000).toInt().coerceAtMost(MAX_RADIUS_METERS)
         val latPad = radiusKm / 111.0    // ~1° lat = 111 km
         val lngPad = radiusKm / (111.0 * Math.cos(Math.toRadians(location.latitude)))
 
-        // Step 1: Emit fresh cache (if within TTL)
+        // Step 1: Emit fresh cache (if within TTL and not forcing refresh)
         val cached = loadCachedVenuesInBounds(
             minLat = location.latitude - latPad,
             maxLat = location.latitude + latPad,
@@ -86,15 +87,20 @@ class VenueRepositoryImpl @Inject constructor(
             maxLng = location.longitude + lngPad
         )
         val freshCache = cached.filter { !it.isCacheStale }
-        if (freshCache.isNotEmpty()) {
-            emit(Result.success(applyFilters(freshCache, venueType, sportType)))
-        }
+        
+        if (!forceRefresh) {
+            if (freshCache.isNotEmpty()) {
+                emit(Result.success(applyFilters(freshCache, venueType, sportType)))
+            }
 
-        // Step 2: Check if network refresh needed
-        val staleCache = cached.any { it.isCacheStale }
-        if (!staleCache && freshCache.isNotEmpty()) {
-            Timber.d("VenueRepo: cache fresh, ${freshCache.size} venues")
-            return@flow
+            // Step 2: Check if network refresh needed
+            val staleCache = cached.any { it.isCacheStale }
+            if (!staleCache && freshCache.isNotEmpty()) {
+                Timber.d("VenueRepo: cache fresh, ${freshCache.size} venues")
+                return@flow
+            }
+        } else {
+            Timber.d("VenueRepo: forceRefresh requested, bypassing cache")
         }
 
         // Step 3: Parallel Places API fetches
