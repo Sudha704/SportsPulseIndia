@@ -1,13 +1,15 @@
 package com.sportspulse.india.features.venues.data
 
-import com.sportspulse.india.core.data.api.DistanceMatrixService
 import com.sportspulse.india.core.data.api.PlacesApiService
 import com.sportspulse.india.core.data.db.dao.VenueDao
 import com.sportspulse.india.core.data.mapper.EntityMapper.toDomain
 import com.sportspulse.india.core.data.mapper.EntityMapper.toEntity
-import com.sportspulse.india.core.data.mapper.PlacesMapper.enrichVenue
 import com.sportspulse.india.core.data.mapper.PlacesMapper.inferSports
 import com.sportspulse.india.core.data.mapper.PlacesMapper.toDomain
+import com.sportspulse.india.core.data.dto.NewPlacesSearchRequest
+import com.sportspulse.india.core.data.dto.LocationBias
+import com.sportspulse.india.core.data.dto.LocationCircle
+import com.sportspulse.india.core.data.dto.LatLngDto
 import com.sportspulse.india.core.domain.entity.SportType
 import com.sportspulse.india.core.domain.entity.UserLocation
 import com.sportspulse.india.core.domain.entity.Venue
@@ -42,25 +44,23 @@ import kotlin.math.ceil
 class VenueRepositoryImpl @Inject constructor(
     private val venueDao: VenueDao,
     private val placesApiService: PlacesApiService,
-    private val distanceMatrixService: DistanceMatrixService,
     private val haversine: HaversineDistanceUseCase
 ) : VenueRepository {
 
     companion object {
         private const val MAX_RADIUS_METERS = 25_000   // 25 km
-        private const val DM_BATCH_SIZE     = 25       // Distance Matrix max destinations
         private val CACHE_TTL_MS = TimeUnit.HOURS.toMillis(2)
 
-        /** Places search combinations (type + keyword pairs). */
+        /** Places search combinations (text queries). */
         private val SEARCH_QUERIES = listOf(
-            Pair("sports_complex", null),
-            Pair("stadium", null),
-            Pair("establishment", "turf"),
-            Pair("establishment", "badminton court"),
-            Pair("establishment", "indoor sports"),
-            Pair("establishment", "cricket net"),
-            Pair("gym", null),
-            Pair("establishment", "swimming pool")
+            "sports complex",
+            "stadium",
+            "turf",
+            "badminton court",
+            "indoor sports",
+            "cricket net",
+            "gym",
+            "swimming pool"
         )
     }
 
@@ -113,16 +113,8 @@ class VenueRepositoryImpl @Inject constructor(
             lonSelector  = { it.lng }
         )
 
-        // Step 5: Enrich top-25 with Distance Matrix
-        val enriched = enrichWithTravelTimes(location, preSorted.take(DM_BATCH_SIZE))
-            .getOrDefault(preSorted.take(DM_BATCH_SIZE))
-
         // Combine enriched + remainder (already distance-sorted)
-        val finalList = (enriched + preSorted.drop(DM_BATCH_SIZE))
-            .sortedWith(
-                compareBy<Venue> { if (it.travelTimeMinutes > 0) it.travelTimeMinutes else Int.MAX_VALUE }
-                    .thenBy { it.distanceKm }
-            )
+        val finalList = preSorted.sortedBy { it.distanceKm }
 
         // Step 6: Cache and emit
         cacheVenues(finalList)
@@ -134,50 +126,11 @@ class VenueRepositoryImpl @Inject constructor(
             runCatching {
                 val existing = venueDao.getVenueByPlaceId(placeId)?.toDomain()
                     ?: throw NoSuchElementException("Venue $placeId not in cache")
-
-                val response = placesApiService.getPlaceDetails(
-                    placeId = placeId,
-                    fields  = "name,formatted_address,rating,user_ratings_total," +
-                            "opening_hours,photos,formatted_phone_number,website,geometry"
-                )
-                val enriched = response.result?.enrichVenue(existing) ?: existing
-                cacheVenues(listOf(enriched))
-                enriched
+                existing
             }
         }
 
-    override suspend fun enrichWithTravelTimes(
-        origin: UserLocation,
-        venues: List<Venue>
-    ): Result<List<Venue>> = withContext(Dispatchers.IO) {
-        runCatching {
-            if (venues.isEmpty()) return@runCatching venues
 
-            val originStr = "${origin.latitude},${origin.longitude}"
-            val batches   = venues.chunked(DM_BATCH_SIZE)
-
-            val enrichedVenues = mutableListOf<Venue>()
-            batches.forEach { batch ->
-                val destinations = batch.joinToString("|") { "${it.lat},${it.lng}" }
-                val response = distanceMatrixService.getDistanceMatrix(
-                    origins      = originStr,
-                    destinations = destinations,
-                    mode         = "driving"
-                )
-                val elements = response.rows?.firstOrNull()?.elements ?: emptyList()
-                batch.forEachIndexed { index, venue ->
-                    val element = elements.getOrNull(index)
-                    val travelSeconds = element?.duration?.value ?: -1
-                    val travelMinutes = if (travelSeconds > 0)
-                        ceil(travelSeconds / 60.0).toInt() else -1
-                    enrichedVenues += venue.copy(travelTimeMinutes = travelMinutes)
-                }
-            }
-            enrichedVenues
-        }.onFailure { e ->
-            Timber.e(e, "VenueRepo: Distance Matrix enrichment failed")
-        }
-    }
 
     override suspend fun pruneStaleVenues() {
         withContext(Dispatchers.IO) {
@@ -200,24 +153,28 @@ class VenueRepositoryImpl @Inject constructor(
         location: UserLocation,
         radiusMeters: Int
     ): List<Venue> = coroutineScope {
-        val locationStr = "${location.latitude},${location.longitude}"
+        val locationBias = LocationBias(
+            circle = LocationCircle(
+                center = LatLngDto(latitude = location.latitude, longitude = location.longitude),
+                radius = radiusMeters.toDouble()
+            )
+        )
 
-        val results = SEARCH_QUERIES.map { (type, keyword) ->
+        val results = SEARCH_QUERIES.map { keyword ->
             async {
                 runCatching {
-                    placesApiService.nearbySearch(
-                        location = locationStr,
-                        radius   = radiusMeters,
-                        type     = type,
-                        keyword  = keyword
-                    ).results?.map { placeResult ->
+                    val request = NewPlacesSearchRequest(
+                        textQuery = keyword,
+                        locationBias = locationBias
+                    )
+                    placesApiService.searchText(request).places?.map { placeResult ->
                         placeResult.toDomain(
                             userLat = location.latitude,
                             userLng = location.longitude
                         )
                     } ?: emptyList()
                 }.onFailure { e ->
-                    Timber.e(e, "VenueRepo: Places search failed type=$type keyword=$keyword")
+                    Timber.e(e, "VenueRepo: Places search failed keyword=$keyword")
                 }.getOrDefault(emptyList())
             }
         }.awaitAll()

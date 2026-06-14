@@ -26,8 +26,7 @@ class VenueViewModel @Inject constructor(
 
     init {
         observeLocation()
-        // Automatically fetch device location on startup (requires permissions)
-        handleIntent(VenueIntent.FetchUserLocation)
+        // Location will be fetched by VenueScreen after permissions are granted
     }
 
     fun handleIntent(intent: VenueIntent) {

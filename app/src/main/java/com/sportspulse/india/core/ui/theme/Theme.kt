@@ -1,15 +1,17 @@
 package com.sportspulse.india.core.ui.theme
 
 import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.sportspulse.india.core.data.preferences.ThemeMode
 
-// We force a dark theme for this premium sports app experience.
 private val DarkColorScheme = darkColorScheme(
     primary = Primary,
     secondary = Secondary,
@@ -27,11 +29,35 @@ private val DarkColorScheme = darkColorScheme(
     outline = Divider
 )
 
+private val LightColorScheme = lightColorScheme(
+    primary = LightPrimary,
+    secondary = LightSecondary,
+    tertiary = LightPrimaryVariant,
+    background = LightBackground,
+    surface = LightSurface,
+    surfaceVariant = LightSurfaceVariant,
+    error = LightError,
+    onPrimary = LightBackground,
+    onSecondary = LightBackground,
+    onBackground = LightTextPrimary,
+    onSurface = LightTextPrimary,
+    onSurfaceVariant = LightTextSecondary,
+    onError = LightBackground,
+    outline = LightDivider
+)
+
 @Composable
 fun SportsPulseIndiaTheme(
+    themeMode: ThemeMode = ThemeMode.DARK,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val isDarkTheme = when (themeMode) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+
+    val colorScheme = if (isDarkTheme) DarkColorScheme else LightColorScheme
     val view = LocalView.current
 
     if (!view.isInEditMode) {
@@ -40,8 +66,8 @@ fun SportsPulseIndiaTheme(
             window.statusBarColor = colorScheme.background.toArgb()
             window.navigationBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = false
-                isAppearanceLightNavigationBars = false
+                isAppearanceLightStatusBars = !isDarkTheme
+                isAppearanceLightNavigationBars = !isDarkTheme
             }
         }
     }

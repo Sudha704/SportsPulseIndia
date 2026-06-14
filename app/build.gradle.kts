@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 // Load local.properties for API keys
@@ -67,7 +68,6 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             buildConfigField("Boolean", "ENABLE_LOGGING", "true")
         }
@@ -191,8 +191,9 @@ dependencies {
     // ─── Splash Screen ───────────────────────────────────────────────────
     implementation(libs.androidx.core.splashscreen)
 
-    // ─── Gemini AI ───────────────────────────────────────────────────────
-    implementation(libs.generativeai)
+    // ─── Firebase AI Logic ───────────────────────────────────────────────
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
 
     // ─── RSS (Rome) ──────────────────────────────────────────────────────
     implementation(libs.rome)
@@ -205,6 +206,12 @@ dependencies {
 
     // ─── Security ────────────────────────────────────────────────────────
     implementation(libs.androidx.security.crypto)
+
+    // ─── Biometric (App Lock) ────────────────────────────────────────
+    implementation(libs.androidx.biometric)
+
+    // ─── Lifecycle Process (Foreground detection) ─────────────────────
+    implementation(libs.androidx.lifecycle.process)
 
     // ─── Testing ─────────────────────────────────────────────────────────
     testImplementation("junit:junit:4.13.2")

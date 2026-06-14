@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.sportspulse.india.BuildConfig
 import com.sportspulse.india.core.data.api.CricApiService
-import com.sportspulse.india.core.data.api.DistanceMatrixService
 import com.sportspulse.india.core.data.api.FootballDataService
 import com.sportspulse.india.core.data.api.GistConfigService
 import com.sportspulse.india.core.data.api.PlacesApiService
@@ -31,10 +30,13 @@ object NetworkModule {
     // Constants
     // ─────────────────────────────────────────────────────────────────────────
 
-    private const val BASE_URL_CRICAPI          = "https://api.cricapi.com/v1/"
-    private const val BASE_URL_SPORTRADAR       = "https://api.sportradar.com/"
-    private const val BASE_URL_FOOTBALL_DATA    = "https://api.football-data.org/v4/"
-    private const val BASE_URL_PLACES           = "https://maps.googleapis.com/maps/api/"
+    // private const val BASE_URL_CRICAPI          = "https://api.cricapi.com/v1/"
+    // private const val BASE_URL_SPORTRADAR       = "https://api.sportradar.com/"
+    // private const val BASE_URL_FOOTBALL_DATA    = "https://api.football-data.org/v4/"
+    private const val BASE_URL_CRICAPI          = "https://newsdata.io/api/1/"
+    private const val BASE_URL_SPORTRADAR       = "https://newsapi.org/v2/"
+    private const val BASE_URL_FOOTBALL_DATA    = "https://v3.football.api-sports.io/"
+    private const val BASE_URL_PLACES           = "https://places.googleapis.com/"
     private const val BASE_URL_GIST             = "https://gist.githubusercontent.com/"
 
     private const val TIMEOUT_SECONDS           = 30L
@@ -118,7 +120,8 @@ object NetworkModule {
             Interceptor { chain ->
                 val original = chain.request()
                 val url = original.url.newBuilder()
-                    .addQueryParameter("api_key", BuildConfig.SPORTRADAR_API_KEY)
+                    // .addQueryParameter("api_key", BuildConfig.SPORTRADAR_API_KEY)
+                    .addQueryParameter("apiKey", BuildConfig.SPORTRADAR_API_KEY)
                     .build()
                 chain.proceed(original.newBuilder().url(url).build())
             }
@@ -151,7 +154,8 @@ object NetworkModule {
             Interceptor { chain ->
                 chain.proceed(
                     chain.request().newBuilder()
-                        .addHeader("X-Auth-Token", BuildConfig.FOOTBALL_DATA_API_KEY)
+                        // .addHeader("X-Auth-Token", BuildConfig.FOOTBALL_DATA_API_KEY)
+                        .addHeader("x-apisports-key", BuildConfig.FOOTBALL_DATA_API_KEY)
                         .build()
                 )
             }
@@ -171,8 +175,8 @@ object NetworkModule {
             .create(FootballDataService::class.java)
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Google Places + Distance Matrix client
-    // Auth: key query param injected per request
+    // Google Places API (New) client
+    // Auth: X-Goog-Api-Key and X-Goog-FieldMask headers
     // ─────────────────────────────────────────────────────────────────────────
 
     @Provides
@@ -182,10 +186,11 @@ object NetworkModule {
         baseOkHttpClient(
             Interceptor { chain ->
                 val original = chain.request()
-                val url = original.url.newBuilder()
-                    .addQueryParameter("key", BuildConfig.PLACES_API_KEY)
+                val request = original.newBuilder()
+                    .addHeader("X-Goog-Api-Key", BuildConfig.PLACES_API_KEY)
+                    .addHeader("X-Goog-FieldMask", "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types,places.nationalPhoneNumber,places.regularOpeningHours,places.photos,places.websiteUri")
                     .build()
-                chain.proceed(original.newBuilder().url(url).build())
+                chain.proceed(request)
             }
         )
 
@@ -201,19 +206,6 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(PlacesApiService::class.java)
-
-    @Provides
-    @Singleton
-    fun provideDistanceMatrixService(
-        @Named("places") okHttpClient: OkHttpClient,
-        gson: Gson
-    ): DistanceMatrixService =
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_PLACES)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-            .create(DistanceMatrixService::class.java)
 
     // ─────────────────────────────────────────────────────────────────────────
     // GitHub Gist client (broadcast schedule JSON)

@@ -1,6 +1,7 @@
 package com.sportspulse.india.features.detail.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,7 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import com.sportspulse.india.core.ui.theme.Saffron
+import com.sportspulse.india.core.ui.theme.IndianWhite
+import com.sportspulse.india.core.ui.theme.IndianGreen
+import com.sportspulse.india.core.ui.theme.NavyBlue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -44,14 +52,27 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Match Details") },
+                title = { 
+                    Text(
+                        "Match Details", 
+                        fontWeight = FontWeight.Bold,
+                        color = NavyBlue
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = NavyBlue)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent,
+                    titleContentColor = NavyBlue,
+                    navigationIconContentColor = NavyBlue
+                ),
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(Saffron, IndianWhite, IndianGreen)
+                    )
                 )
             )
         }
@@ -108,9 +129,10 @@ fun DetailScreen(
                         } else {
                             Button(
                                 onClick = { viewModel.handleIntent(DetailIntent.GenerateAiSummary(eventId)) },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Saffron)
                             ) {
-                                Text("Generate Match Analysis")
+                                Text("Generate Match Analysis", color = Color.White)
                             }
                         }
                     }
@@ -172,47 +194,58 @@ private fun ScoreboardHeader(event: com.sportspulse.india.core.domain.entity.Spo
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                if (event.homeTeamLogoUrl != null) {
-                    AsyncImage(
-                        model = event.homeTeamLogoUrl,
-                        contentDescription = event.homeTeam,
-                        modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+        
+        if (event.homeTeam == "News" || event.homeTeam == "League" || event.homeTeam == "Headline") {
+            Text(
+                text = event.title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    if (event.homeTeamLogoUrl != null) {
+                        AsyncImage(
+                            model = event.homeTeamLogoUrl,
+                            contentDescription = event.homeTeam,
+                            modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(event.homeTeam, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = event.scoreOrTime,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = event.status.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(event.homeTeam, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-            
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                Text(
-                    text = event.scoreOrTime,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = event.status.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                if (event.awayTeamLogoUrl != null) {
-                    AsyncImage(
-                        model = event.awayTeamLogoUrl,
-                        contentDescription = event.awayTeam,
-                        modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
-                    )
+                
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    if (event.awayTeamLogoUrl != null) {
+                        AsyncImage(
+                            model = event.awayTeamLogoUrl,
+                            contentDescription = event.awayTeam,
+                            modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(event.awayTeam, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(event.awayTeam, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -233,7 +266,7 @@ private fun AlertSection(isAlertSet: Boolean, onSetAlert: () -> Unit, onRemoveAl
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Alert",
-                    tint = if (isAlertSet) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (isAlertSet) Saffron else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -245,7 +278,7 @@ private fun AlertSection(isAlertSet: Boolean, onSetAlert: () -> Unit, onRemoveAl
             Button(
                 onClick = if (isAlertSet) onRemoveAlert else onSetAlert,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isAlertSet) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    containerColor = if (isAlertSet) MaterialTheme.colorScheme.error else Saffron
                 )
             ) {
                 Text(if (isAlertSet) "Remove" else "Notify Me")
@@ -264,7 +297,7 @@ private fun BroadcastRow(broadcast: Broadcast) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Watch", tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Default.PlayArrow, contentDescription = "Watch", tint = Saffron)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -279,7 +312,7 @@ private fun BroadcastRow(broadcast: Broadcast) {
                 )
             }
             if (broadcast.isFree) {
-                Text("FREE", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("FREE", style = MaterialTheme.typography.labelSmall, color = Saffron)
             }
         }
     }

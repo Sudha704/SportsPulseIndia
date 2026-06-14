@@ -1,7 +1,6 @@
 package com.sportspulse.india.core.data.mapper
 
-import com.sportspulse.india.core.data.dto.PlaceDetailResult
-import com.sportspulse.india.core.data.dto.PlaceResult
+import com.sportspulse.india.core.data.dto.NewPlaceResult
 import com.sportspulse.india.core.domain.entity.SportType
 import com.sportspulse.india.core.domain.entity.Venue
 import com.sportspulse.india.core.domain.entity.VenueType
@@ -21,57 +20,35 @@ object PlacesMapper {
     // Nearby Search result → Venue (lightweight, no travel time yet)
     // ─────────────────────────────────────────────────────────────────────────
 
-    fun PlaceResult.toDomain(
+    fun NewPlaceResult.toDomain(
         userLat: Double,
         userLng: Double,
         travelTimeMinutes: Int = -1
     ): Venue {
-        val lat = geometry?.location?.lat ?: 0.0
-        val lng = geometry?.location?.lng ?: 0.0
+        val lat = location?.latitude ?: 0.0
+        val lng = location?.longitude ?: 0.0
         val distanceKm = haversine(userLat, userLng, lat, lng)
-        val venueName  = name ?: "Sports Venue"
+        val venueName  = displayName?.text ?: "Sports Venue"
         val types      = this.types ?: emptyList()
 
         return Venue(
-            placeId           = placeId,
+            placeId           = id,
             name              = venueName,
-            address           = vicinity ?: "",
+            address           = formattedAddress ?: "",
             type              = classifyVenueType(venueName, types),
             distanceKm        = distanceKm,
             travelTimeMinutes = travelTimeMinutes,
             rating            = rating ?: 0f,
-            reviewCount       = userRatingsTotal ?: 0,
-            isOpenNow         = openingHours?.openNow ?: false,
+            reviewCount       = userRatingCount ?: 0,
+            isOpenNow         = regularOpeningHours?.openNow ?: false,
             nextOpenTime      = null,
             availableSports   = inferSports(venueName, types),
             lat               = lat,
             lng               = lng,
-            photoReference    = photos?.firstOrNull()?.photoReference,
-            phoneNumber       = null,
-            websiteUrl        = null,
+            photoReference    = photos?.firstOrNull()?.name,
+            phoneNumber       = nationalPhoneNumber,
+            websiteUrl        = websiteUri,
             cachedAt          = System.currentTimeMillis()
-        )
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Place Details result → enriched Venue
-    // ─────────────────────────────────────────────────────────────────────────
-
-    fun PlaceDetailResult.enrichVenue(existing: Venue): Venue {
-        val weekdayText = openingHours?.weekdayText
-        val nextOpenStr = if (openingHours?.openNow == false && !weekdayText.isNullOrEmpty()) {
-            weekdayText.firstOrNull()
-        } else null
-
-        return existing.copy(
-            address        = formattedAddress ?: existing.address,
-            rating         = rating ?: existing.rating,
-            reviewCount    = userRatingsTotal ?: existing.reviewCount,
-            isOpenNow      = openingHours?.openNow ?: existing.isOpenNow,
-            nextOpenTime   = nextOpenStr,
-            photoReference = photos?.firstOrNull()?.photoReference ?: existing.photoReference,
-            phoneNumber    = formattedPhoneNumber,
-            websiteUrl     = website
         )
     }
 

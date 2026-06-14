@@ -1,5 +1,6 @@
 package com.sportspulse.india.features.alerts.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import com.sportspulse.india.core.ui.theme.Saffron
+import com.sportspulse.india.core.ui.theme.IndianWhite
+import com.sportspulse.india.core.ui.theme.IndianGreen
+import com.sportspulse.india.core.ui.theme.NavyBlue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sportspulse.india.core.domain.entity.MatchAlert
@@ -31,9 +38,21 @@ fun AlertsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Match Alerts", fontWeight = FontWeight.Bold) },
+                title = { 
+                    Text(
+                        "Match Alerts", 
+                        fontWeight = FontWeight.Bold,
+                        color = NavyBlue
+                    ) 
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent,
+                    titleContentColor = NavyBlue
+                ),
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(Saffron, IndianWhite, IndianGreen)
+                    )
                 )
             )
         }
@@ -98,7 +117,7 @@ fun AlertCard(
     
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -117,7 +136,7 @@ fun AlertCard(
                 Text(
                     text = "${alert.sport.displayName} • ${formatter.format(alert.eventStartTimeIst)}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Saffron
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -130,7 +149,11 @@ fun AlertCard(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Switch(
                     checked = alert.isEnabled,
-                    onCheckedChange = onToggle
+                    onCheckedChange = onToggle,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Saffron,
+                        checkedTrackColor = Saffron.copy(alpha = 0.3f)
+                    )
                 )
                 IconButton(onClick = onDelete) {
                     Icon(

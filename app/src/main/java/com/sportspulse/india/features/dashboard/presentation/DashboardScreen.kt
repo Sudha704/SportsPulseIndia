@@ -1,5 +1,6 @@
 package com.sportspulse.india.features.dashboard.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,6 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import com.sportspulse.india.core.ui.theme.Saffron
+import com.sportspulse.india.core.ui.theme.IndianWhite
+import com.sportspulse.india.core.ui.theme.IndianGreen
+import com.sportspulse.india.core.ui.theme.NavyBlue
+import com.sportspulse.india.core.ui.theme.IndianGreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sportspulse.india.core.domain.entity.SportType
@@ -28,11 +36,20 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Text("SportsPulse India", fontWeight = FontWeight.Bold) 
+                    Text(
+                        text = "SportsPulse India", 
+                        fontWeight = FontWeight.Bold,
+                        color = NavyBlue
+                    ) 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = Color.Transparent,
+                    titleContentColor = NavyBlue
+                ),
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(Saffron, IndianWhite, IndianGreen)
+                    )
                 )
             )
         }

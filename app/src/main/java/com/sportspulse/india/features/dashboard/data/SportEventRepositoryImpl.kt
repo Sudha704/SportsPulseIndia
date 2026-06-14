@@ -204,62 +204,161 @@ class SportEventRepositoryImpl @Inject constructor(
     // ─────────────────────────────────────────────────────────────────────────
 
     private suspend fun fetchCricketEvents(): List<SportEvent> = runCatching {
-        val response = cricApiService.getCurrentMatches(offset = 0)
-        response.data?.mapNotNull { match ->
-            val broadcasts = broadcastDao.getBroadcastsForEvent("cricapi_${match.id}")
-                .map { it.toDomain() }
-            runCatching { match.toDomain(broadcasts, hierarchyFilter) }.getOrNull()
-        } ?: emptyList()
+        val response = cricApiService.getLatestCricketNews()
+        Timber.d("SportEventRepo: fetchCricketEvents raw JSON: $response")
+        val events = mutableListOf<SportEvent>()
+        if (response.isJsonObject) {
+            val results = response.asJsonObject.getAsJsonArray("results")
+            results?.forEachIndexed { index, el ->
+                val obj = el.asJsonObject
+                val title = obj.get("title")?.asString ?: "Cricket News $index"
+                events.add(
+                    SportEvent(
+                        id = "newsdata_$index",
+                        sport = SportType.CRICKET,
+                        title = title,
+                        homeTeam = "News",
+                        awayTeam = "Update",
+                        status = MatchStatus.COMPLETED,
+                        scoreOrTime = "News",
+                        venue = "Global",
+                        hierarchyLevel = HierarchyLevel.NATIONAL,
+                        broadcasts = emptyList(),
+                        startTimeIst = System.currentTimeMillis(),
+                        competition = "News"
+                    )
+                )
+            }
+        }
+        events
     }.onFailure { e ->
         Timber.e(e, "SportEventRepo: CricAPI fetch failed")
     }.getOrDefault(emptyList())
 
     private suspend fun fetchFootballEvents(): List<SportEvent> = runCatching {
-        val response = footballDataService.getTodaysMatches(competitions = "ISL")
-        response.matches?.mapNotNull { match ->
-            val broadcasts = broadcastDao.getBroadcastsForEvent("football_${match.id}")
-                .map { it.toDomain() }
-            runCatching { match.toDomain(broadcasts, hierarchyFilter) }.getOrNull()
-        } ?: emptyList()
+        val response = footballDataService.getLeagues()
+        Timber.d("SportEventRepo: fetchFootballEvents raw JSON: $response")
+        val events = mutableListOf<SportEvent>()
+        if (response.isJsonObject) {
+            val results = response.asJsonObject.getAsJsonArray("response")
+            results?.forEachIndexed { index, el ->
+                val leagueObj = el.asJsonObject.getAsJsonObject("league")
+                val title = leagueObj?.get("name")?.asString ?: "Football League $index"
+                events.add(
+                    SportEvent(
+                        id = "football_league_$index",
+                        sport = SportType.FOOTBALL,
+                        title = title,
+                        homeTeam = "League",
+                        awayTeam = "Match",
+                        status = MatchStatus.UPCOMING,
+                        scoreOrTime = "Upcoming",
+                        venue = "Various",
+                        hierarchyLevel = HierarchyLevel.NATIONAL,
+                        broadcasts = emptyList(),
+                        startTimeIst = System.currentTimeMillis(),
+                        competition = title
+                    )
+                )
+            }
+        }
+        events
     }.onFailure { e ->
         Timber.e(e, "SportEventRepo: football-data fetch failed")
     }.getOrDefault(emptyList())
 
     private suspend fun fetchKabaddiEvents(): List<SportEvent> = runCatching {
-        val response = sportRadarService.getKabaddiSchedule(today)
-        response.sportEvents?.mapNotNull { event ->
-            val broadcasts = broadcastDao.getBroadcastsForEvent("sportradar_${event.id}")
-                .map { it.toDomain() }
-            runCatching {
-                event.toDomain(SportType.KABADDI, broadcasts, hierarchyFilter)
-            }.getOrNull()
-        } ?: emptyList()
+        val response = sportRadarService.getTopHeadlines()
+        Timber.d("SportEventRepo: fetchKabaddiEvents raw JSON: $response")
+        val events = mutableListOf<SportEvent>()
+        if (response.isJsonObject) {
+            val results = response.asJsonObject.getAsJsonArray("articles")
+            results?.forEachIndexed { index, el ->
+                val obj = el.asJsonObject
+                val title = obj.get("title")?.asString ?: "Sports Headline $index"
+                events.add(
+                    SportEvent(
+                        id = "sportradar_kabaddi_$index",
+                        sport = SportType.KABADDI,
+                        title = title,
+                        homeTeam = "Headline",
+                        awayTeam = "Update",
+                        status = MatchStatus.COMPLETED,
+                        scoreOrTime = "News",
+                        venue = "Global",
+                        hierarchyLevel = HierarchyLevel.INTERNATIONAL,
+                        broadcasts = emptyList(),
+                        startTimeIst = System.currentTimeMillis(),
+                        competition = "News"
+                    )
+                )
+            }
+        }
+        events
     }.onFailure { e ->
         Timber.e(e, "SportEventRepo: SportRadar kabaddi fetch failed")
     }.getOrDefault(emptyList())
 
     private suspend fun fetchHockeyEvents(): List<SportEvent> = runCatching {
-        val response = sportRadarService.getHockeySchedule(today)
-        response.sportEvents?.mapNotNull { event ->
-            val broadcasts = broadcastDao.getBroadcastsForEvent("sportradar_${event.id}")
-                .map { it.toDomain() }
-            runCatching {
-                event.toDomain(SportType.HOCKEY, broadcasts, hierarchyFilter)
-            }.getOrNull()
-        } ?: emptyList()
+        val response = sportRadarService.getTopHeadlines()
+        Timber.d("SportEventRepo: fetchHockeyEvents raw JSON: $response")
+        val events = mutableListOf<SportEvent>()
+        if (response.isJsonObject) {
+            val results = response.asJsonObject.getAsJsonArray("articles")
+            results?.forEachIndexed { index, el ->
+                val obj = el.asJsonObject
+                val title = obj.get("title")?.asString ?: "Sports Headline $index"
+                events.add(
+                    SportEvent(
+                        id = "sportradar_hockey_$index",
+                        sport = SportType.HOCKEY,
+                        title = title,
+                        homeTeam = "Headline",
+                        awayTeam = "Update",
+                        status = MatchStatus.COMPLETED,
+                        scoreOrTime = "News",
+                        venue = "Global",
+                        hierarchyLevel = HierarchyLevel.INTERNATIONAL,
+                        broadcasts = emptyList(),
+                        startTimeIst = System.currentTimeMillis(),
+                        competition = "News"
+                    )
+                )
+            }
+        }
+        events
     }.onFailure { e ->
         Timber.e(e, "SportEventRepo: SportRadar hockey fetch failed")
     }.getOrDefault(emptyList())
 
     private suspend fun fetchMotorsportsEvents(): List<SportEvent> = runCatching {
-        val response = sportRadarService.getFormula1Schedule()
-        response.sportEvents?.mapNotNull { event ->
-            val broadcasts = broadcastDao.getBroadcastsForEvent("sportradar_${event.id}")
-                .map { it.toDomain() }
-            runCatching {
-                event.toDomain(SportType.MOTORSPORTS, broadcasts, hierarchyFilter)
-            }.getOrNull()
-        } ?: emptyList()
+        val response = sportRadarService.getTopHeadlines()
+        Timber.d("SportEventRepo: fetchMotorsportsEvents raw JSON: $response")
+        val events = mutableListOf<SportEvent>()
+        if (response.isJsonObject) {
+            val results = response.asJsonObject.getAsJsonArray("articles")
+            results?.forEachIndexed { index, el ->
+                val obj = el.asJsonObject
+                val title = obj.get("title")?.asString ?: "Sports Headline $index"
+                events.add(
+                    SportEvent(
+                        id = "sportradar_motorsports_$index",
+                        sport = SportType.MOTORSPORTS,
+                        title = title,
+                        homeTeam = "Headline",
+                        awayTeam = "Update",
+                        status = MatchStatus.COMPLETED,
+                        scoreOrTime = "News",
+                        venue = "Global",
+                        hierarchyLevel = HierarchyLevel.INTERNATIONAL,
+                        broadcasts = emptyList(),
+                        startTimeIst = System.currentTimeMillis(),
+                        competition = "News"
+                    )
+                )
+            }
+        }
+        events
     }.onFailure { e ->
         Timber.e(e, "SportEventRepo: SportRadar F1 fetch failed")
     }.getOrDefault(emptyList())

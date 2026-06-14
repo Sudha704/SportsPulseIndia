@@ -166,91 +166,59 @@ data class FootballGoals(
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Google Places DTOs
+// Google Places API (New) DTOs
 // ─────────────────────────────────────────────────────────────────────────────
 
-data class PlacesNearbySearchResponse(
-    @SerializedName("results")      val results: List<PlaceResult>?,
-    @SerializedName("status")       val status: String?,
-    @SerializedName("next_page_token") val nextPageToken: String?
+data class NewPlacesSearchRequest(
+    @SerializedName("textQuery")        val textQuery: String,
+    @SerializedName("locationBias")     val locationBias: LocationBias? = null,
+    @SerializedName("includedType")     val includedType: String? = null
 )
 
-data class PlaceResult(
-    @SerializedName("place_id")       val placeId: String,
-    @SerializedName("name")           val name: String?,
-    @SerializedName("vicinity")       val vicinity: String?,
-    @SerializedName("geometry")       val geometry: PlaceGeometry?,
-    @SerializedName("rating")         val rating: Float?,
-    @SerializedName("user_ratings_total") val userRatingsTotal: Int?,
-    @SerializedName("opening_hours")  val openingHours: PlaceOpeningHoursBrief?,
-    @SerializedName("photos")         val photos: List<PlacePhoto>?,
-    @SerializedName("types")          val types: List<String>?
+data class LocationBias(
+    @SerializedName("circle") val circle: LocationCircle
 )
 
-data class PlaceGeometry(
-    @SerializedName("location") val location: LatLngDto?
+data class LocationCircle(
+    @SerializedName("center") val center: LatLngDto,
+    @SerializedName("radius") val radius: Double
+)
+
+data class NewPlacesSearchResponse(
+    @SerializedName("places") val places: List<NewPlaceResult>?
+)
+
+data class NewPlaceResult(
+    @SerializedName("id")                   val id: String,
+    @SerializedName("displayName")          val displayName: NewPlaceDisplayName?,
+    @SerializedName("formattedAddress")     val formattedAddress: String?,
+    @SerializedName("location")             val location: LatLngDto?,
+    @SerializedName("rating")               val rating: Float?,
+    @SerializedName("userRatingCount")      val userRatingCount: Int?,
+    @SerializedName("types")                val types: List<String>?,
+    @SerializedName("nationalPhoneNumber")  val nationalPhoneNumber: String?,
+    @SerializedName("regularOpeningHours")  val regularOpeningHours: NewPlaceOpeningHours?,
+    @SerializedName("photos")               val photos: List<NewPlacePhoto>?,
+    @SerializedName("websiteUri")           val websiteUri: String?
+)
+
+data class NewPlaceDisplayName(
+    @SerializedName("text")         val text: String,
+    @SerializedName("languageCode") val languageCode: String?
 )
 
 data class LatLngDto(
-    @SerializedName("lat") val lat: Double?,
-    @SerializedName("lng") val lng: Double?
+    @SerializedName("latitude")  val latitude: Double?,
+    @SerializedName("longitude") val longitude: Double?
 )
 
-data class PlaceOpeningHoursBrief(
-    @SerializedName("open_now") val openNow: Boolean?
+data class NewPlaceOpeningHours(
+    @SerializedName("openNow")     val openNow: Boolean?,
+    @SerializedName("weekdayDescriptions") val weekdayDescriptions: List<String>?
 )
 
-data class PlacePhoto(
-    @SerializedName("photo_reference") val photoReference: String?,
-    @SerializedName("height")          val height: Int?,
-    @SerializedName("width")           val width: Int?
-)
-
-data class PlaceDetailsResponse(
-    @SerializedName("result") val result: PlaceDetailResult?,
-    @SerializedName("status") val status: String?
-)
-
-data class PlaceDetailResult(
-    @SerializedName("place_id")              val placeId: String?,
-    @SerializedName("name")                  val name: String?,
-    @SerializedName("formatted_address")     val formattedAddress: String?,
-    @SerializedName("rating")                val rating: Float?,
-    @SerializedName("user_ratings_total")    val userRatingsTotal: Int?,
-    @SerializedName("opening_hours")         val openingHours: PlaceOpeningHoursDetail?,
-    @SerializedName("photos")                val photos: List<PlacePhoto>?,
-    @SerializedName("formatted_phone_number") val formattedPhoneNumber: String?,
-    @SerializedName("website")               val website: String?,
-    @SerializedName("geometry")              val geometry: PlaceGeometry?
-)
-
-data class PlaceOpeningHoursDetail(
-    @SerializedName("open_now")    val openNow: Boolean?,
-    @SerializedName("weekday_text") val weekdayText: List<String>?
-)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Google Distance Matrix DTOs
-// ─────────────────────────────────────────────────────────────────────────────
-
-data class DistanceMatrixResponse(
-    @SerializedName("status")            val status: String?,
-    @SerializedName("origin_addresses")  val originAddresses: List<String>?,
-    @SerializedName("destination_addresses") val destinationAddresses: List<String>?,
-    @SerializedName("rows")              val rows: List<DistanceMatrixRow>?
-)
-
-data class DistanceMatrixRow(
-    @SerializedName("elements") val elements: List<DistanceMatrixElement>?
-)
-
-data class DistanceMatrixElement(
-    @SerializedName("status")   val status: String?,   // "OK" | "NOT_FOUND" | "ZERO_RESULTS"
-    @SerializedName("duration") val duration: DistanceMatrixValue?,
-    @SerializedName("distance") val distance: DistanceMatrixValue?
-)
-
-data class DistanceMatrixValue(
-    @SerializedName("value") val value: Int?,    // seconds or metres
-    @SerializedName("text")  val text: String?   // e.g. "22 mins" or "5.2 km"
+data class NewPlacePhoto(
+    @SerializedName("name")         val name: String,
+    @SerializedName("heightPx")     val heightPx: Int?,
+    @SerializedName("widthPx")      val widthPx: Int?
 )

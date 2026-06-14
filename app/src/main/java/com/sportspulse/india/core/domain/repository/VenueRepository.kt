@@ -20,7 +20,7 @@ interface VenueRepository {
      * Behaviour:
      *  1. Return cached venues immediately if within 2-hour TTL.
      *  2. Fetch from Places API in background, emit updated list.
-     *  3. Sort by [Venue.travelTimeMinutes] ascending after Distance Matrix enrichment.
+     *  3. Sort by distance ascending.
      *
      * @param location   User's current location.
      * @param radiusKm   Search radius in km (15–25, default 15).
@@ -39,14 +39,7 @@ interface VenueRepository {
      */
     suspend fun getVenueDetails(placeId: String): Result<Venue>
 
-    /**
-     * Refreshes Distance Matrix travel times for a list of [venues] from [origin].
-     * Updates the cached records in Room.
-     */
-    suspend fun enrichWithTravelTimes(
-        origin: UserLocation,
-        venues: List<Venue>
-    ): Result<List<Venue>>
+    // Removed enrichWithTravelTimes as external routing APIs are not available
 
     /**
      * Removes cached venue entries older than 2 hours.

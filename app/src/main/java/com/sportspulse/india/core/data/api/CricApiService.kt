@@ -1,7 +1,8 @@
 package com.sportspulse.india.core.data.api
 
-import com.sportspulse.india.core.data.dto.CricApiCurrentMatchesResponse
-import com.sportspulse.india.core.data.dto.CricApiMatchInfoResponse
+// import com.sportspulse.india.core.data.dto.CricApiCurrentMatchesResponse
+// import com.sportspulse.india.core.data.dto.CricApiMatchInfoResponse
+import com.google.gson.JsonElement
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -18,17 +19,25 @@ interface CricApiService {
      * Fetches currently live and upcoming cricket matches.
      * @param offset  Pagination offset (default 0).
      */
-    @GET("currentMatches")
-    suspend fun getCurrentMatches(
-        @Query("offset") offset: Int = 0
-    ): CricApiCurrentMatchesResponse
+    // @GET("currentMatches")
+    // suspend fun getCurrentMatches(
+    //     @Query("offset") offset: Int = 0
+    // ): CricApiCurrentMatchesResponse
 
-    /**
-     * Fetches detailed match information including score card.
-     * @param id  CricAPI match ID.
-     */
-    @GET("match_info")
-    suspend fun getMatchInfo(
-        @Query("id") id: String
-    ): CricApiMatchInfoResponse
+    // /**
+    //  * Fetches detailed match information including score card.
+    //  * @param id  CricAPI match ID.
+    //  */
+    // @GET("match_info")
+    // suspend fun getMatchInfo(
+    //     @Query("id") id: String
+    // ): CricApiMatchInfoResponse
+
+    @GET("latest")
+    suspend fun getLatestCricketNews(
+        @Query("country") country: String = "in",
+        @Query("category") category: String = "sports",
+        @Query("q") q: String = "cricket",
+        @Query("language") language: String = "en"
+    ): JsonElement
 }

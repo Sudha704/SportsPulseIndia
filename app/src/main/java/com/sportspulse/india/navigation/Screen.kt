@@ -1,9 +1,11 @@
 package com.sportspulse.india.navigation
 
 sealed class Screen(val route: String) {
+    object BharatSportsChat : Screen("bharat_sports_chat")
     object Dashboard : Screen("dashboard")
     object Venues : Screen("venues")
     object Alerts : Screen("alerts")
+    object Settings : Screen("settings")
     
     // Detail screen takes eventId as an argument
     object Detail : Screen("detail/{eventId}") {
@@ -12,7 +14,8 @@ sealed class Screen(val route: String) {
 }
 
 val BottomNavScreens = listOf(
-    Screen.Dashboard,
+    Screen.BharatSportsChat,
     Screen.Venues,
-    Screen.Alerts
+    Screen.Alerts,
+    Screen.Settings
 )

@@ -1,8 +1,9 @@
 package com.sportspulse.india.core.data.api
 
-import com.sportspulse.india.core.data.dto.FootballMatchesResponse
+// import com.sportspulse.india.core.data.dto.FootballMatchesResponse
+import com.google.gson.JsonElement
 import retrofit2.http.GET
-import retrofit2.http.Path
+// import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -23,19 +24,24 @@ interface FootballDataService {
      * @param competitionCode  e.g. "ISL", "PL"
      * @param status           Filter: "SCHEDULED", "LIVE", "FINISHED", "IN_PLAY"
      */
-    @GET("competitions/{competitionCode}/matches")
-    suspend fun getMatchesByCompetition(
-        @Path("competitionCode") competitionCode: String,
-        @Query("status") status: String? = null,
-        @Query("dateFrom") dateFrom: String? = null,
-        @Query("dateTo")   dateTo: String? = null
-    ): FootballMatchesResponse
+    // @GET("competitions/{competitionCode}/matches")
+    // suspend fun getMatchesByCompetition(
+    //     @Path("competitionCode") competitionCode: String,
+    //     @Query("status") status: String? = null,
+    //     @Query("dateFrom") dateFrom: String? = null,
+    //     @Query("dateTo")   dateTo: String? = null
+    // ): FootballMatchesResponse
 
-    /**
-     * Fetches today's matches across all tracked competitions.
-     */
-    @GET("matches")
-    suspend fun getTodaysMatches(
-        @Query("competitions") competitions: String = "ISL,PL"
-    ): FootballMatchesResponse
+    // /**
+    //  * Fetches today's matches across all tracked competitions.
+    //  */
+    // @GET("matches")
+    // suspend fun getTodaysMatches(
+    //     @Query("competitions") competitions: String = "ISL,PL"
+    // ): FootballMatchesResponse
+
+    @GET("leagues")
+    suspend fun getLeagues(
+        @Query("country") country: String = "India"
+    ): JsonElement
 }

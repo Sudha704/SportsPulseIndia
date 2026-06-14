@@ -60,38 +60,50 @@ fun EventCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Teams & Score
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TeamLogoAndName(
-                    teamName = event.homeTeam,
-                    logoUrl = event.homeTeamLogoUrl,
-                    modifier = Modifier.weight(1f),
-                    alignStart = true
+            if (event.homeTeam == "News" || event.homeTeam == "League" || event.homeTeam == "Headline") {
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
                 )
-                
-                // Score or Time
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 12.dp)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = event.scoreOrTime,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (event.status == MatchStatus.LIVE) Primary else MaterialTheme.colorScheme.onSurface
+                    TeamLogoAndName(
+                        teamName = event.homeTeam,
+                        logoUrl = event.homeTeamLogoUrl,
+                        modifier = Modifier.weight(1f),
+                        alignStart = true
+                    )
+                    
+                    // Score or Time
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Text(
+                            text = event.scoreOrTime,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (event.status == MatchStatus.LIVE) Primary else MaterialTheme.colorScheme.onSurface
+                            )
                         )
+                    }
+                    
+                    TeamLogoAndName(
+                        teamName = event.awayTeam,
+                        logoUrl = event.awayTeamLogoUrl,
+                        modifier = Modifier.weight(1f),
+                        alignStart = false
                     )
                 }
-                
-                TeamLogoAndName(
-                    teamName = event.awayTeam,
-                    logoUrl = event.awayTeamLogoUrl,
-                    modifier = Modifier.weight(1f),
-                    alignStart = false
-                )
             }
             
             // Footer: Broadcasts & Venue

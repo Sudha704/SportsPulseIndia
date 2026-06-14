@@ -1,9 +1,11 @@
 package com.sportspulse.india.core.data.api
 
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.generationConfig
-import com.sportspulse.india.BuildConfig
+import com.google.firebase.Firebase
+import com.google.firebase.ai.GenerativeModel
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
+import com.google.firebase.ai.type.content
+import com.google.firebase.ai.type.generationConfig
 import com.sportspulse.india.core.domain.entity.Broadcast
 import com.sportspulse.india.core.domain.entity.BroadcastPlatform
 import com.google.gson.Gson
@@ -12,30 +14,22 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Wrapper around the Google AI Generative Language SDK (Gemini).
- *
- * Responsibilities:
- *  1. Generate match preview / analysis for [DetailScreen].
- *  2. Infer broadcast schedule as structured JSON (last-resort fallback for [BroadcastRepository]).
- *  3. Enrich event descriptions when primary data sources return sparse data.
- *
- * Model: gemini-1.5-flash (fast, cost-efficient for sports summaries)
- */
 @Singleton
 class GeminiApiClient @Inject constructor() {
 
+    companion object {
+        // Toggle this flag to switch between Vertex AI and Google Developer API backends.
+        // Vertex AI is recommended for production apps with Firebase Blaze plan.
+        const val USE_VERTEX_AI = true
+    }
+
     private val gson = Gson()
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Model instances
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /** Flash model for match previews and broadcast inference. */
     private val flashModel: GenerativeModel by lazy {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash",
-            apiKey    = BuildConfig.GEMINI_API_KEY,
+        Firebase.ai(
+            backend = if (USE_VERTEX_AI) GenerativeBackend.vertexAI() else GenerativeBackend.googleAI()
+        ).generativeModel(
+            modelName = "gemini-2.5-flash",
             generationConfig = generationConfig {
                 temperature      = 0.7f
                 topK             = 40
@@ -45,11 +39,11 @@ class GeminiApiClient @Inject constructor() {
         )
     }
 
-    /** Pro model for richer, longer analysis (used for detailed match write-ups). */
     private val proModel: GenerativeModel by lazy {
-        GenerativeModel(
-            modelName = "gemini-1.5-pro",
-            apiKey    = BuildConfig.GEMINI_API_KEY,
+        Firebase.ai(
+            backend = if (USE_VERTEX_AI) GenerativeBackend.vertexAI() else GenerativeBackend.googleAI()
+        ).generativeModel(
+            modelName = "gemini-2.5-flash",
             generationConfig = generationConfig {
                 temperature      = 0.8f
                 topK             = 40
@@ -59,22 +53,6 @@ class GeminiApiClient @Inject constructor() {
         )
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 1. Match preview / analysis
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Generates a 3-5 sentence match preview for the given event.
-     *
-     * @param eventTitle   e.g. "India vs Australia – 4th Test"
-     * @param competition  e.g. "Border-Gavaskar Trophy"
-     * @param homeTeam     Home team name.
-     * @param awayTeam     Away team name.
-     * @param venue        Venue name.
-     * @param status       "LIVE", "UPCOMING", or "COMPLETED"
-     * @param scoreOrTime  Current score or scheduled time string.
-     * @return             AI-generated match summary or null on failure.
-     */
     suspend fun generateMatchPreview(
         eventTitle: String,
         competition: String,
@@ -95,9 +73,6 @@ class GeminiApiClient @Inject constructor() {
         Timber.e(e, "GeminiApiClient: match preview failed for $eventTitle")
     }.getOrNull()
 
-    /**
-     * Streams a match analysis token-by-token (for the Detail screen typing animation).
-     */
     suspend fun streamMatchAnalysis(
         eventTitle: String,
         competition: String,
@@ -128,20 +103,6 @@ class GeminiApiClient @Inject constructor() {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 2. Broadcast schedule inference (structured JSON output)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Asks Gemini to return a JSON array of broadcast slots for the given event.
-     *
-     * Prompt is carefully engineered to return valid, parseable JSON only.
-     * Falls back to an empty list on parse failure.
-     *
-     * @param eventTitle  e.g. "India vs South Korea – FIH Pro League"
-     * @param sport       e.g. "HOCKEY"
-     * @return            Parsed list of [Broadcast] objects, or empty list on failure.
-     */
     suspend fun inferBroadcasts(eventTitle: String, sport: String): List<Broadcast> = runCatching {
         val prompt = buildBroadcastInferencePrompt(eventTitle, sport)
         val response = flashModel.generateContent(
@@ -153,13 +114,6 @@ class GeminiApiClient @Inject constructor() {
         Timber.e(e, "GeminiApiClient: broadcast inference failed for $eventTitle")
     }.getOrDefault(emptyList())
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 3. Event description enrichment
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Generates a 1-2 sentence rich description for a sport event with minimal data.
-     */
     suspend fun enrichEventDescription(eventTitle: String, competition: String): String? =
         runCatching {
             val prompt = """
@@ -171,10 +125,6 @@ class GeminiApiClient @Inject constructor() {
         }.onFailure { e ->
             Timber.e(e, "GeminiApiClient: enrichment failed for $eventTitle")
         }.getOrNull()
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Prompt builders
-    // ─────────────────────────────────────────────────────────────────────────
 
     private fun buildMatchPreviewPrompt(
         eventTitle: String,
@@ -231,12 +181,7 @@ class GeminiApiClient @Inject constructor() {
         Return an empty array [] if you cannot determine the broadcaster with confidence.
     """.trimIndent()
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Broadcast JSON parser
-    // ─────────────────────────────────────────────────────────────────────────
-
     private fun parseBroadcastJson(raw: String): List<Broadcast> {
-        // Extract JSON array from response (Gemini sometimes wraps in ```json ... ```)
         val jsonStr = extractJsonArray(raw)
         val type = object : TypeToken<List<BroadcastJson>>() {}.type
         val items = runCatching<List<BroadcastJson>> {
@@ -252,7 +197,6 @@ class GeminiApiClient @Inject constructor() {
         return if (start >= 0 && end > start) text.substring(start, end + 1) else "[]"
     }
 
-    /** Internal DTO for parsing Gemini's broadcast JSON output. */
     private data class BroadcastJson(
         val channelName: String?,
         val channelNumber: Int?,

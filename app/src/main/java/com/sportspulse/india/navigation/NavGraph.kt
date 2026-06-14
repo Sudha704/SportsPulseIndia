@@ -2,9 +2,10 @@ package com.sportspulse.india.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,8 +17,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sportspulse.india.features.alerts.presentation.AlertsScreen
+import com.sportspulse.india.features.chat.presentation.BharatSportsScreen
 import com.sportspulse.india.features.dashboard.presentation.DashboardScreen
 import com.sportspulse.india.features.detail.presentation.DetailScreen
+import com.sportspulse.india.features.settings.presentation.SettingsScreen
 import com.sportspulse.india.features.venues.presentation.VenueScreen
 
 @Composable
@@ -32,11 +35,11 @@ fun SportsPulseNavGraph(
             if (BottomNavScreens.any { it.route == currentRoute }) {
                 NavigationBar {
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-                        label = { Text("Dashboard") },
-                        selected = currentRoute == Screen.Dashboard.route,
+                        icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Chat") },
+                        label = { Text("Chat") },
+                        selected = currentRoute == Screen.BharatSportsChat.route,
                         onClick = {
-                            navController.navigate(Screen.Dashboard.route) {
+                            navController.navigate(Screen.BharatSportsChat.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -73,15 +76,35 @@ fun SportsPulseNavGraph(
                             }
                         }
                     )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        label = { Text("Settings") },
+                        selected = currentRoute == Screen.Settings.route,
+                        onClick = {
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Dashboard.route,
+            startDestination = Screen.BharatSportsChat.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // ─── Chat (Start Destination) ────────────────────────────────
+            composable(Screen.BharatSportsChat.route) {
+                BharatSportsScreen()
+            }
+
+            // ─── Dashboard (still accessible, not in bottom nav) ─────────
             composable(Screen.Dashboard.route) {
                 DashboardScreen(
                     onNavigateToDetail = { eventId ->
@@ -102,6 +125,13 @@ fun SportsPulseNavGraph(
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
                 DetailScreen(
                     eventId = eventId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ─── Settings ────────────────────────────────────────────────
+            composable(Screen.Settings.route) {
+                SettingsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
